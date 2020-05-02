@@ -1,13 +1,13 @@
 from mrjob.job import MRJob
-
 from mrjob.step import MRStep
 
-import re
+class MRFlight(MRJob):
 
-WORD_RE = re.compile(r"[\w']+")
-
-
-class MRWordFreqCount(MRJob):
+    def steps(self):
+        return [
+            MRStep(mapper = self.mapper,
+                   reducer = self.reducer)
+        ]
 
     def mapper(self, _, line):
         (year,
@@ -41,11 +41,28 @@ class MRWordFreqCount(MRJob):
          airline_delay,
          late_aircraft_delay,
          weather_delay) = line.split(',')
-        yield 'row', 1
+
+        if arrival_delay == '':
+            arrival_delay = 0
+
+        if departure_delay == '':
+            departure_delay = 0
+
+        departure_delay = float(departure_delay)
+        arrival_delay = float(arrival_delay)
+        month = int(month)
+
+        yield f'{month:02d}', (departure_delay, arrival_delay)
 
     def reducer(self, key, values):
-        yield key, sum(values)
-
+        total_dep_delay = 0
+        total_arr_delay = 0
+        num_elements = 0
+        for value in values:
+            total_dep_delay += value[0]
+            total_arr_delay += value[1]
+            num_elements += 1
+        yield key, (total_dep_delay/num_elements, total_arr_delay/num_elements)
 
 if __name__ == '__main__':
-    MRWordFreqCount.run()
+    MRFlight.run()

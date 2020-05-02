@@ -1,13 +1,6 @@
 from mrjob.job import MRJob
 
-from mrjob.step import MRStep
-
-import re
-
-WORD_RE = re.compile(r"[\w']+")
-
-
-class MRWordFreqCount(MRJob):
+class MRPreprocess(MRJob):
 
     def mapper(self, _, line):
         (year,
@@ -41,11 +34,15 @@ class MRWordFreqCount(MRJob):
          airline_delay,
          late_aircraft_delay,
          weather_delay) = line.split(',')
-        yield 'row', 1
 
-    def reducer(self, key, values):
-        yield key, sum(values)
+        month = int(month)
+        day = int(day)
+        distance = int(distance)
 
+        yield year, (month, day, airline, distance)
+
+    # def reducer(self, key, values):
+    #     yield key, sum(values)
 
 if __name__ == '__main__':
-    MRWordFreqCount.run()
+    MRPreprocess.run()
